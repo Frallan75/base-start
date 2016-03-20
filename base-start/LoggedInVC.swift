@@ -16,9 +16,11 @@ class LoggedInVC: UIViewController {
     @IBOutlet weak var postField: MaterialTextField!
     @IBOutlet weak var imageSelectorImageView: UIImageView!
     @IBOutlet weak var userImgView: UIImageView!
+
+    static var imageCache = NSCache()
     
     var postArray: [Post] = []
-    static var imageCache = NSCache()
+    var postKey: String!
     var imagePicker = UIImagePickerController()
     var imageSelected = false
     var userImg: UIImage!
@@ -30,6 +32,8 @@ class LoggedInVC: UIViewController {
         tableView.dataSource = self
         imagePicker.delegate = self
         
+//        let center = NSNotificationCenter.defaultCenter()
+//        center.addObserver
         DataService.ds.REF_USER_CURRENT.childByAppendingPath("profileImgUrl").observeSingleEventOfType(.Value, withBlock: { snapshot in
             
             if let profileImgUrl = snapshot.value as? String {
@@ -54,7 +58,7 @@ class LoggedInVC: UIViewController {
             if let snapshots = snapshot.children.allObjects as? [FDataSnapshot] {
                 
                 for snap in snapshots {
-
+//                    print("printing snap in LoggedVC: \(snap)")
                     if let postDict = snap.value as? Dictionary<String, AnyObject> {
                         let key = snap.key
                         let post = Post(postKey: key, dict: postDict)
@@ -108,6 +112,7 @@ class LoggedInVC: UIViewController {
                                     self.postToFirebase(imageschackUrl, profileId: id)
                                 })
                                 
+                                
                             } else {
                                 
                                 self.postToFirebase(nil, profileId: id)
@@ -131,6 +136,8 @@ class LoggedInVC: UIViewController {
         
         post["id"] = profileId
         
+        print("printing post from LoggedVC \(post)")
+        
         DataService.ds.REF_POSTS.childByAutoId().setValue(post)
         
         postField.text = ""
@@ -139,24 +146,57 @@ class LoggedInVC: UIViewController {
         postField.resignFirstResponder()
         tableView.reloadData()
     }
+    
+    @IBAction func commentsButtonPressed(sender: UIButton) {
+        
+        var post: Post!
+        
+        let point = tableView.convertPoint(CGPoint.zero, fromView: sender)
+        if let indexPath = tableView.indexPathForRowAtPoint(point) {
+            post = postArray[indexPath.row]
+            postKey = post.postKey
+            performSegueWithIdentifier("commentViewSegue", sender: postKey)
+        }
+    }
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        
+        if segue.identifier == "commentViewSegue" {
+            
+            if let vc = segue.destinationViewController as? CommentsVC {
+                
+                vc.postKey = self.postKey
+                
+                
+            } else {
+                
+                print("trouble presenting Comments View")
+            }
+        }
+        
+    }
+
 }
 
-//TABLEVIEW
+//TABLEVIEW EXTENSION
 extension LoggedInVC: UITableViewDelegate, UITableViewDataSource {
     
+    //MAIN TABLEVIEW
+    
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+     
         return 1
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
         return postArray.count
+
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         
             let post = postArray[indexPath.row]
-            
+        
             if let cell = tableView.dequeueReusableCellWithIdentifier("PostCell") as? PostCell {
                 
                 cell.request?.cancel()
@@ -170,11 +210,11 @@ extension LoggedInVC: UITableViewDelegate, UITableViewDataSource {
                 cell.configureCell(post, img: img, userImg: self.userImg)
                 
                 return cell
-            
+                
             } else {
 
             return PostCell()
-            }
+        }
     }
     
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
@@ -185,17 +225,6 @@ extension LoggedInVC: UITableViewDelegate, UITableViewDataSource {
             return 150.0
         } else {
             return 463.0
-        }
-    }
-    
-    func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        
-        if section == 0 {
-            return 0
-        } else if section == 1 {
-            return 50
-        } else {
-            return 0
         }
     }
 }

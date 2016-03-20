@@ -19,6 +19,7 @@ class DataService {
     private var _REF_BASE = Firebase(url: "\(BASE_URL)")
     private var _REF_POSTS = Firebase(url: "\(BASE_URL)/posts")
     private var _REF_USERS = Firebase(url: "\(BASE_URL)/users")
+    private var _REF_COMMENTS = Firebase(url: "\(BASE_URL)/comments")
     
     var storedImgUrl: String!
     
@@ -32,6 +33,10 @@ class DataService {
     
     var REF_USERS: Firebase {
         return _REF_USERS
+    }
+    
+    var REF_COMMENTS: Firebase {
+        return _REF_COMMENTS
     }
     
     var REF_USER_CURRENT: Firebase {
@@ -65,26 +70,20 @@ class DataService {
     }
     
     func postImgToImageschack(img: UIImage, completion: (imageschackUrl: String) -> ()) {
-    
-    
-        
+
     let urlStr = "https://post.imageshack.us/upload_api.php"
     let url = NSURL(string: urlStr)!
     let imgData = UIImageJPEGRepresentation(img, 0.2)!
     let keyData = "12DJKPSU5fc3afbd01b1630cc718cae3043220f3".dataUsingEncoding(NSUTF8StringEncoding)!
     let keyJSON = "json".dataUsingEncoding(NSUTF8StringEncoding)!
 
-        Alamofire.upload(.POST, url,
-            
-            multipartFormData: { splitData in
+        Alamofire.upload(.POST, url, multipartFormData: { splitData in
                 
                 splitData.appendBodyPart(data: imgData, name: "fileupload", fileName: "image", mimeType: "image/jpg")
                 splitData.appendBodyPart(data: keyData, name: "key")
                 splitData.appendBodyPart(data: keyJSON, name: "format")
                 
-            },
-            
-            encodingCompletion: { encodingResult in
+            }, encodingCompletion: { encodingResult in
                 
                 switch encodingResult {
                     
@@ -108,16 +107,4 @@ class DataService {
                 }
         })
     }
-    
-    func postProfilImgToCache(url: String, completion: () -> ()) {
-        
-
-        
-        
-        
-        
-        
-    }
-
-
 }

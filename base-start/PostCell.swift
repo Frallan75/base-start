@@ -19,12 +19,13 @@ class PostCell: UITableViewCell {
     @IBOutlet weak var descLbl: UITextView!
     @IBOutlet weak var imageUrlLbl: UIImageView!
     @IBOutlet weak var likeImg: UIImageView!
+    @IBOutlet weak var showHideCommentsBtn: UIButton!
     
     var post: Post!
     var request: Request?
     var likeRef: Firebase!
     var fetchedImg: UIImage!
-    
+
     override func awakeFromNib() {
         super.awakeFromNib()
         
@@ -41,13 +42,15 @@ class PostCell: UITableViewCell {
         showcaseImage.clipsToBounds = true
     }
     
+    // POST CONFIG
+    
     func configureCell(post: Post, img: UIImage?, userImg: UIImage?) {
         
         self.post = post
         self.descLbl.text = post.postDescription
         self.likesLbl.text = "\(post.likes)"
         
-        //PostImg
+        //POST IMAGE
         
         if post.imageUrl != nil {
             
@@ -103,7 +106,7 @@ class PostCell: UITableViewCell {
         //LIKESIMG CONTROL
         
         likeRef = DataService.ds.REF_USER_CURRENT.childByAppendingPath("likes").childByAppendingPath(post.postKey)
-        
+
         likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
             
             if let _ = snapshot.value as? NSNull {
@@ -116,7 +119,7 @@ class PostCell: UITableViewCell {
     }
     
     func likeTapped(sender: UITapGestureRecognizer) {
-        
+          print(likeRef)
         likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
             
             if let _ = snapshot.value as? NSNull {
@@ -136,6 +139,4 @@ class PostCell: UITableViewCell {
             }
         })
     }
-    
-    
 }
