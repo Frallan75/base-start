@@ -10,7 +10,6 @@ import UIKit
 
 class MaterialView: UIView {
 
-
     override func awakeFromNib() {
         
         layer.cornerRadius = 2.0
@@ -20,6 +19,4 @@ class MaterialView: UIView {
         layer.shadowOffset = CGSizeMake(0.0, 2.0)
 
     }
-    
-
 }

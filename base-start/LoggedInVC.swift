@@ -11,12 +11,12 @@ import Firebase
 import Alamofire
 
 class LoggedInVC: UIViewController {
-
+    
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var postField: MaterialTextField!
     @IBOutlet weak var imageSelectorImageView: UIImageView!
     @IBOutlet weak var userImgView: UIImageView!
-
+    
     static var imageCache = NSCache()
     
     var postArray: [Post] = []
@@ -24,17 +24,17 @@ class LoggedInVC: UIViewController {
     var imagePicker = UIImagePickerController()
     var imageSelected = false
     var userImg: UIImage!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         tableView.delegate = self
         tableView.dataSource = self
         imagePicker.delegate = self
+
+        let profileImgUrlRef = DataService.ds.REF_USER_CURRENT.childByAppendingPath("profileImgUrl")
         
-//        let center = NSNotificationCenter.defaultCenter()
-//        center.addObserver
-        DataService.ds.REF_USER_CURRENT.childByAppendingPath("profileImgUrl").observeSingleEventOfType(.Value, withBlock: { snapshot in
+        profileImgUrlRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
             
             if let profileImgUrl = snapshot.value as? String {
                 
@@ -43,14 +43,13 @@ class LoggedInVC: UIViewController {
                     self.userImg = image
                     self.userImgView.image = self.userImg
                     LoggedInVC.imageCache.setObject(image, forKey: profileImgUrl)
-                    
                 })
                 
             } else {
                 self.userImg = UIImage(named: "add_user_img.png")
             }
         })
-    
+        
         DataService.ds.REF_POSTS.observeEventType(.Value, withBlock: { snapshot in
             
             self.postArray = []
@@ -58,8 +57,9 @@ class LoggedInVC: UIViewController {
             if let snapshots = snapshot.children.allObjects as? [FDataSnapshot] {
                 
                 for snap in snapshots {
-//                    print("printing snap in LoggedVC: \(snap)")
+                    
                     if let postDict = snap.value as? Dictionary<String, AnyObject> {
+                        
                         let key = snap.key
                         let post = Post(postKey: key, dict: postDict)
                         self.postArray.append(post)
@@ -78,14 +78,14 @@ class LoggedInVC: UIViewController {
     }
     
     @IBAction func logoutBtnPressed(sender: AnyObject) {
-       
+        
         print("in unauth")
         NSUserDefaults.standardUserDefaults().setValue(nil, forKey: KEY_UID)
         print("in log out btn pressed: \(NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID))")
         DataService.ds.REF_BASE.unauth()
         dismissViewControllerAnimated(true, completion: nil)
     }
-
+    
     @IBAction func makePost(sender: UIButton) {
         
         if let txt = postField.text where txt != "" {
@@ -112,7 +112,6 @@ class LoggedInVC: UIViewController {
                                     self.postToFirebase(imageschackUrl, profileId: id)
                                 })
                                 
-                                
                             } else {
                                 
                                 self.postToFirebase(nil, profileId: id)
@@ -130,7 +129,7 @@ class LoggedInVC: UIViewController {
         var post: Dictionary<String, AnyObject> = ["description": postField.text!, "likes": 0]
         
         if imgUrl != nil {
-        
+            
             post["imageUrl"] = imgUrl!
         }
         
@@ -167,52 +166,65 @@ class LoggedInVC: UIViewController {
                 
                 vc.postKey = self.postKey
                 
-                
             } else {
                 
                 print("trouble presenting Comments View")
             }
         }
+    }
+}
+
+//IMAGEPICKER
+extension LoggedInVC: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+    
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
+        
+        imagePicker.dismissViewControllerAnimated(true, completion: nil)
+        self.imageSelectorImageView.image = image
+        imageSelected = true
         
     }
-
+    
+    @IBAction func selectImage(sender: UITapGestureRecognizer) {
+        
+        presentViewController(imagePicker, animated: true, completion: nil)
+        
+    }
 }
 
 //TABLEVIEW EXTENSION
 extension LoggedInVC: UITableViewDelegate, UITableViewDataSource {
     
-    //MAIN TABLEVIEW
-    
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-     
+        
         return 1
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return postArray.count
-
+        
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         
-            let post = postArray[indexPath.row]
+        let post = postArray[indexPath.row]
         
-            if let cell = tableView.dequeueReusableCellWithIdentifier("PostCell") as? PostCell {
-                
-                cell.request?.cancel()
-                
-                var img: UIImage?
-                
-                if let url = post.imageUrl {
-                    img = LoggedInVC.imageCache.objectForKey(url) as? UIImage
-                }
-                
-                cell.configureCell(post, img: img, userImg: self.userImg)
-                
-                return cell
-                
-            } else {
-
+        if let cell = tableView.dequeueReusableCellWithIdentifier("PostCell") as? PostCell {
+            
+            cell.request?.cancel()
+            
+            var img: UIImage?
+            
+            if let url = post.imageUrl {
+                img = LoggedInVC.imageCache.objectForKey(url) as? UIImage
+            }
+            
+            cell.configureCell(post, img: img, userImg: self.userImg)
+            
+            return cell
+            
+        } else {
+            
             return PostCell()
         }
     }
@@ -226,23 +238,5 @@ extension LoggedInVC: UITableViewDelegate, UITableViewDataSource {
         } else {
             return 463.0
         }
-    }
-}
-
-//IMAGEPICKER
-extension LoggedInVC: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
-        
-        imagePicker.dismissViewControllerAnimated(true, completion: nil)
-        self.imageSelectorImageView.image = image
-        imageSelected = true
-        
-    }
-    
-    @IBAction func selectImage(sender: UITapGestureRecognizer) {
-        
-    presentViewController(imagePicker, animated: true, completion: nil)
-    
     }
 }

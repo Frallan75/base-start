@@ -17,6 +17,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var emailField: MaterialTextField!
 
     @IBOutlet weak var loginButton: FBSDKLoginButton!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -25,7 +26,7 @@ class ViewController: UIViewController {
     override func viewDidAppear(animated: Bool) {
         
         if NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID) != nil {
-            print("in quick login VC")
+            
             let userKey = NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID)
             self.performSegueWithIdentifier(SEGUE_LOGGED_IN, sender: userKey)
         }
@@ -63,6 +64,7 @@ class ViewController: UIViewController {
                             self.displayAlert("Server alert", msg: "The server found a problem, please try again later!")
                         }
                     }
+                    
                 } else {
                     
                     NSUserDefaults.standardUserDefaults().setValue(authData.uid, forKey: KEY_UID)
@@ -93,13 +95,15 @@ class ViewController: UIViewController {
                 
                 fbRequest.startWithCompletionHandler { (connection : FBSDKGraphRequestConnection!, result : AnyObject!, error : NSError!) -> Void in
                     
-                    if error == nil {
+                    if error != nil {
                         
+                        print("Error Getting Info \(error)")
+                        
+                    } else {
+                    
                         let dict = result as! Dictionary<String, String>
                         user["username"] = dict["name"]
                         
-                    } else {
-                        print("Error Getting Info \(error)");
                     }
                 }
 
@@ -108,7 +112,9 @@ class ViewController: UIViewController {
                 DataService.ds.REF_BASE.authWithOAuthProvider("facebook", token: accessToken, withCompletionBlock: { error, authData in
                     
                     if error != nil {
+                        
                         print("Login Failed. \(error)")
+                    
                     } else {
                         
                         if NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID) != nil {
@@ -146,7 +152,9 @@ class ViewController: UIViewController {
             
             if let vc = segue.destinationViewController as? SetupUserVC {
                 vc.user = sender!
+                
             } else {
+                
                 print("unable to perform segue")
             }
             

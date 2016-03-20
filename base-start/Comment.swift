@@ -44,19 +44,13 @@ class Comment {
         return _commenterProfileImg
     }
     
- 
-    
     init(commentKey: String, dict: Dictionary<String, AnyObject>) {
         
         self._commentKey = commentKey
-        
         self._commentText = dict["commentText"] as? String
         self._uId = dict["commenterId"] as? String
         self._commenterUsername = dict["username"] as? String
-        self._commenterProfileImgUrl = dict["profileImgUrl"] as? String 
-        
-        
-        
-        }
+        self._commenterProfileImgUrl = dict["profileImgUrl"] as? String
+    }
 }
 

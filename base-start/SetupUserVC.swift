@@ -37,7 +37,6 @@ class SetupUserVC: UIViewController {
         set(newValue) {
             
             self._user = newValue
-            
         }
     }
     
@@ -47,16 +46,18 @@ class SetupUserVC: UIViewController {
         imagePicker.delegate = self
         
         if let userEmail = user["email"] as? String {
+        
             self._userEmail = userEmail
             chosenEmailLbl.text = self.userEmail
+        
         } else {
+            
             chosenEmailLbl.text = "No email chosen"
         }
         
         if let userPwd = user["pwd"] as? String {
             self._userPwd = userPwd
         }
-        
     }
     
     @IBAction func saveBtnPressed(sender: UIButton) {
@@ -70,9 +71,9 @@ class SetupUserVC: UIViewController {
                 if error != nil {
                     
                     print(error.debugDescription)
-                
+                    
                 } else {
-                
+                    
                     DataService.ds.postImgToImageschack(self.userImageView.image!, completion:{ imageschackUrl in
                         
                         LoggedInVC.imageCache.setObject(self.userImageView.image!, forKey: imageschackUrl)
@@ -91,8 +92,6 @@ class SetupUserVC: UIViewController {
         } else {
             self.displayAlert("Username Fail!", msg: "Please enter an unsername!")
         }
-        
-        
     }
     
     func displayAlert(title: String, msg: String) {

@@ -23,7 +23,7 @@ class CommentsViewCell: UITableViewCell {
         
         profileImg.layer.cornerRadius = 25
         profileImg.clipsToBounds = true
-
+        
     }
 
     func configureCommentsViewCell(comment: String, commenterId: String, commenterProfileImgUrl: String, username: String) {
@@ -42,9 +42,6 @@ class CommentsViewCell: UITableViewCell {
                 self.profileImg.image = image
             })
         }
-        
-        
     }
-
 }
 
