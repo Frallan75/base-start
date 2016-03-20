@@ -21,6 +21,13 @@ class CommentsVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.tableView.estimatedRowHeight = 100
+        self.tableView.rowHeight = UITableViewAutomaticDimension
+        
+        self.tableView.setNeedsLayout()
+        self.tableView.layoutIfNeeded()
+
+        
         //LOADING EVENTUAL EXISTING COMMENTS
 
         let postRef = DataService.ds.REF_POSTS.childByAppendingPath(postKey).childByAppendingPath("comments")
@@ -146,5 +153,13 @@ extension CommentsVC: UITableViewDataSource, UITableViewDelegate {
         }
         return UITableViewCell()
     }
+    
+//    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+//        return UITableViewAutomaticDimension
+//    }
+//    
+//    func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+//        return UITableViewAutomaticDimension
+//    }
 }
 

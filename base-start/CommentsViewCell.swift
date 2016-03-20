@@ -21,7 +21,7 @@ class CommentsViewCell: UITableViewCell {
     
     override func drawRect(rect: CGRect) {
         
-        profileImg.layer.cornerRadius = 25
+        profileImg.layer.cornerRadius = profileImg.frame.height / 2
         profileImg.clipsToBounds = true
         
     }

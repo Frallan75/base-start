@@ -13,18 +13,18 @@ import Firebase
 class PostCell: UITableViewCell {
 
     @IBOutlet weak var profileImage: UIImageView!
-    @IBOutlet weak var showcaseImage: UIImageView!
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var likesLbl: UILabel!
     @IBOutlet weak var descLbl: UITextView!
-    @IBOutlet weak var imageUrlLbl: UIImageView!
+    @IBOutlet weak var postImageView: UIImageView!
     @IBOutlet weak var likeImg: UIImageView!
-    @IBOutlet weak var showHideCommentsBtn: UIButton!
+    @IBOutlet weak var commentsBtn: UIButton!
     
     var post: Post!
     var request: Request?
     var likeRef: Firebase!
     var fetchedImg: UIImage!
+    var numberOfComments: UInt!
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -33,13 +33,12 @@ class PostCell: UITableViewCell {
         tap.numberOfTapsRequired = 1
         likeImg.addGestureRecognizer(tap)
         likeImg.userInteractionEnabled = true
-        
     }
     
     override func drawRect(rect: CGRect) {
         profileImage.layer.cornerRadius = profileImage.frame.width / 2
         profileImage.clipsToBounds = true
-        showcaseImage.clipsToBounds = true
+        postImageView.clipsToBounds = true
     }
     
     // POST CONFIG
@@ -54,23 +53,23 @@ class PostCell: UITableViewCell {
         
         if post.imageUrl != nil {
             
-            self.imageUrlLbl.hidden = false
+            self.postImageView.hidden = false
             
             if img != nil {
                 
-                self.imageUrlLbl.image = img
+                self.postImageView.image = img
             
             } else {
             
                 DataService.ds.fetchImageFromUrl(post.imageUrl!, completion: { (image) -> () in
                     
-                    self.imageUrlLbl.image = image
+                    self.postImageView.image = image
                     
                 })
             }
             
         } else {
-            self.imageUrlLbl.hidden = true
+            self.postImageView.hidden = true
         }
         
         //PROFILEIMG & USERNAME
@@ -97,7 +96,6 @@ class PostCell: UITableViewCell {
                             
                             self.profileImage.image = image
                         })
-                        
                     }
                 }
             }
@@ -116,6 +114,18 @@ class PostCell: UITableViewCell {
                 self.likeImg.image = UIImage(named: "heart-full.png")
             }
         })
+    
+        //NUMBER OF COMMENTS
+        
+        let postCommentsRef = DataService.ds.REF_POSTS.childByAppendingPath(post.postKey).childByAppendingPath("comments")
+        
+        postCommentsRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
+                
+                self.numberOfComments = snapshot.childrenCount
+            
+                self.commentsBtn.setTitle("Comments (\(self.numberOfComments))", forState: UIControlState.Normal)
+        })
+        
     }
     
     func likeTapped(sender: UITapGestureRecognizer) {

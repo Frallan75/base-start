@@ -236,7 +236,7 @@ extension LoggedInVC: UITableViewDelegate, UITableViewDataSource {
         if post.imageUrl == nil {
             return 150.0
         } else {
-            return 463.0
+            return tableView.frame.size.height * 0.8
         }
     }
 }

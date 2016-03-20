@@ -21,6 +21,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        loginButton.titleLabel!.adjustsFontSizeToFitWidth = true
     }
     
     override func viewDidAppear(animated: Bool) {
