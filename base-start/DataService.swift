@@ -107,4 +107,56 @@ class DataService {
                 }
         })
     }
+    
+    func convertTimeStamp(timestamp: Int) -> String {
+        
+        let timeInMilliseconds = Double(timestamp)
+        let timeInSeconds = timeInMilliseconds / 1000.0
+        
+        let shortDateFormatter = NSDateFormatter()
+        shortDateFormatter.dateStyle = NSDateFormatterStyle.ShortStyle
+        
+        let date = NSDate(timeIntervalSince1970: timeInSeconds)
+        
+        print("Printing current Date")
+        print(date)
+        
+        let currentDateNS = NSDate()
+    
+        let todayDateFormatter = NSDateFormatter()
+        todayDateFormatter.dateFormat = "HH:mm"
+        
+        let dateStringFormatter = NSDateFormatter()
+        dateStringFormatter.dateFormat = "EEE, dd MMMM yyyy @ HH:mm"
+        
+        
+        let newdate = shortDateFormatter.stringFromDate(date)
+        
+        let currentDateInUnix = currentDateNS.timeIntervalSinceReferenceDate
+        let latestdayInUnix = date.timeIntervalSinceReferenceDate
+        
+        let diff = currentDateInUnix - latestdayInUnix
+        
+        let diffinhours = diff/3600
+        
+     
+        
+        var dateToPrint = "N/A"
+        
+        if diffinhours < 24.0 {
+        
+            dateToPrint = "today @ \(todayDateFormatter.stringFromDate(date))"
+        
+        } else if diffinhours > 24.0 && diffinhours < 48.0 {
+            
+            dateToPrint = "yesterday @ \(todayDateFormatter.stringFromDate(date))"
+        
+        } else {
+            
+            dateToPrint = "\(dateStringFormatter.stringFromDate(date))"
+        }
+        
+        return dateToPrint
+        
+    }
 }

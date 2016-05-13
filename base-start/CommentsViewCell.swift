@@ -13,6 +13,7 @@ class CommentsViewCell: UITableViewCell {
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var commentLbl: UILabel!
     @IBOutlet weak var profileImg: UIImageView!
+    @IBOutlet weak var timestamp: UILabel!
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -26,10 +27,11 @@ class CommentsViewCell: UITableViewCell {
         
     }
 
-    func configureCommentsViewCell(comment: String, commenterId: String, commenterProfileImgUrl: String, username: String) {
+    func configureCommentsViewCell(comment: String, commenterId: String, commenterProfileImgUrl: String, username: String, timestamp: String) {
         
         self.usernameLbl.text = username
         self.commentLbl.text = comment
+        self.timestamp.text = timestamp
         
         if let cachedProfileImg = LoggedInVC.imageCache.objectForKey(commenterProfileImgUrl) as? UIImage {
             

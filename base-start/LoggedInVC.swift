@@ -30,6 +30,7 @@ class LoggedInVC: UIViewController {
         
         tableView.delegate = self
         tableView.dataSource = self
+                
         imagePicker.delegate = self
 
         let profileImgUrlRef = DataService.ds.REF_USER_CURRENT.childByAppendingPath("profileImgUrl")
@@ -63,11 +64,14 @@ class LoggedInVC: UIViewController {
                         let key = snap.key
                         let post = Post(postKey: key, dict: postDict)
                         self.postArray.append(post)
+                        
                     }
                 }
             }
             self.tableView.reloadData()
+            
         })
+        
     }
     
     override func viewDidAppear(animated: Bool) {

@@ -19,6 +19,7 @@ class Comment {
     private var _commenterUsername: String!
     private var _commenterProfileImgUrl: String!
     private var _commenterProfileImg: UIImage!
+    private var _timestamp: Int!
     
     var commentText: String {
         return _commentText
@@ -44,6 +45,10 @@ class Comment {
         return _commenterProfileImg
     }
     
+    var timestamp: Int {
+        return _timestamp
+    }
+    
     init(commentKey: String, dict: Dictionary<String, AnyObject>) {
         
         self._commentKey = commentKey
@@ -51,6 +56,7 @@ class Comment {
         self._uId = dict["commenterId"] as? String
         self._commenterUsername = dict["username"] as? String
         self._commenterProfileImgUrl = dict["profileImgUrl"] as? String
+        self._timestamp = dict["timestamp"] as? Int
     }
 }
 

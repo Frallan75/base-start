@@ -15,7 +15,7 @@ class PostCell: UITableViewCell {
     @IBOutlet weak var profileImage: UIImageView!
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var likesLbl: UILabel!
-    @IBOutlet weak var descLbl: UITextView!
+    @IBOutlet weak var descLbl: UILabel!
     @IBOutlet weak var postImageView: UIImageView!
     @IBOutlet weak var likeImg: UIImageView!
     @IBOutlet weak var commentsBtn: UIButton!
@@ -130,6 +130,7 @@ class PostCell: UITableViewCell {
     
     func likeTapped(sender: UITapGestureRecognizer) {
           print(likeRef)
+        
         likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
             
             if let _ = snapshot.value as? NSNull {

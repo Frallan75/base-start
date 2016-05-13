@@ -101,7 +101,7 @@ class CommentsVC: UIViewController {
     
     func commentToFirebase(commentText: String, commenterId: String) {
         
-        let comment: Dictionary<String, AnyObject> = ["commentText": commentText, "commenterId": commenterId]
+        let comment: Dictionary<String, AnyObject> = ["commentText": commentText, "commenterId": commenterId, "timestamp": "N/A"]
         
         DataService.ds.REF_COMMENTS.childByAutoId().setValue(comment) { error, snapshot in
             
@@ -110,10 +110,11 @@ class CommentsVC: UIViewController {
                 
             } else {
                 
-                let commmentKey = snapshot.key
+                let commentKey = snapshot.key
                 
-                DataService.ds.REF_USERS.childByAppendingPath(commenterId).childByAppendingPath("comments").childByAppendingPath(commmentKey).setValue(true)
-                DataService.ds.REF_POSTS.childByAppendingPath(self.postKey).childByAppendingPath("comments").childByAppendingPath(commmentKey).setValue(true)
+                DataService.ds.REF_COMMENTS.childByAppendingPath(commentKey).updateChildValues(["timestamp": FirebaseServerValue.timestamp()])
+                DataService.ds.REF_USERS.childByAppendingPath(commenterId).childByAppendingPath("comments").childByAppendingPath(commentKey).setValue(true)
+                DataService.ds.REF_POSTS.childByAppendingPath(self.postKey).childByAppendingPath("comments").childByAppendingPath(commentKey).setValue(true)
             }
         }
         
@@ -146,8 +147,12 @@ extension CommentsVC: UITableViewDataSource, UITableViewDelegate {
             let commenterId = currentComment.uId
             let url = currentComment.commenterProfileImgUrl
             let username = currentComment.commenterUsername
+            let time = Double(currentComment.timestamp / 1000)
+            let newTime = NSDate(timeIntervalSince1970: time)
+            print("this is in comment vc \(newTime)")
+            let timestamp = DataService.ds.convertTimeStamp(currentComment.timestamp)
             
-            cell.configureCommentsViewCell(text, commenterId: commenterId, commenterProfileImgUrl: url, username: username)
+            cell.configureCommentsViewCell(text, commenterId: commenterId, commenterProfileImgUrl: url, username: username, timestamp: timestamp)
             
             return cell
         }
