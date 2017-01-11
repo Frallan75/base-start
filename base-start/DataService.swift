@@ -7,130 +7,174 @@
 //
 
 import Foundation
-import Firebase
+import FirebaseAuth
+import FirebaseCore
+import FirebaseStorage
+import FirebaseDatabase
 import Alamofire
 
-let BASE_URL = "https://base-start.firebaseio.com"
+let BASE_URL = FIRDatabase.database().reference()
 
 class DataService {
     
     static let ds = DataService()
     
-    private var _REF_BASE = Firebase(url: "\(BASE_URL)")
-    private var _REF_POSTS = Firebase(url: "\(BASE_URL)/posts")
-    private var _REF_USERS = Firebase(url: "\(BASE_URL)/users")
-    private var _REF_COMMENTS = Firebase(url: "\(BASE_URL)/comments")
+    fileprivate var _REF_BASE = BASE_URL
+    fileprivate var _REF_POSTS = BASE_URL.child("posts")
+    fileprivate var _REF_USERS = BASE_URL.child("users")
+    fileprivate var _REF_COMMENTS = BASE_URL.child("comments")
+    fileprivate var _REF_IMGSTORAGE = FIRStorage.storage().reference(forURL: "gs://base-start.appspot.com/")
     
     var storedImgUrl: String!
     
-    var REF_BASE: Firebase {
+    var REF_BASE: FIRDatabaseReference {
         return _REF_BASE
     }
     
-    var REF_POSTS: Firebase {
+    var REF_POSTS: FIRDatabaseReference {
         return _REF_POSTS
     }
     
-    var REF_USERS: Firebase {
+    var REF_USERS: FIRDatabaseReference {
         return _REF_USERS
     }
     
-    var REF_COMMENTS: Firebase {
+    var REF_COMMENTS: FIRDatabaseReference {
         return _REF_COMMENTS
     }
     
-    var REF_USER_CURRENT: Firebase {
+    var REF_IMGSTORAGE: FIRStorageReference {
+        return _REF_IMGSTORAGE
+    }
+    
+    var REF_USER_CURRENT: FIRDatabaseReference {
         
-        let uid = NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID) as! String
-        let user = Firebase(url: "\(BASE_URL)").childByAppendingPath("users").childByAppendingPath(uid)
+        let uid = UserDefaults.standard.value(forKey: KEY_UID) as! String
+        let user = BASE_URL.child("users").child("\(uid)")
         return user
     }
     
-    func createFirebaseUser(uid: String, user: Dictionary<String, String>) {
-        REF_USERS.childByAppendingPath(uid).setValue(user)
+    func createFirebaseUser(_ uid: String, user: Dictionary<String, String>) {
+        REF_USERS.child("\(uid)").setValue(user)
     }
     
-    func fetchImageFromUrl(url: String, completion: (image: UIImage) -> ()) {
+    func uploadImage(uid: String, imageName: String, image: UIImage, completeUpload: @escaping (_ imageUrl: NSString) -> Void) {
         
-        Alamofire.request(.GET, url).validate(contentType: ["image/*"]).response(completionHandler: { request, response, data, error -> Void in
+        let nsdataImg =  UIImagePNGRepresentation(image)
+        let imgSize = CGFloat(nsdataImg!.count)
+        let imageResizeFactor = MAX_IMG_SIZE/imgSize
+        let imageToStore = UIImageJPEGRepresentation(image, imageResizeFactor)
+        
+        REF_IMGSTORAGE.child("\(uid)/\(imageName)").put(imageToStore!, metadata: nil, completion: { (metadata, error) in
+            if let error = error as? NSError {
+                print("There was an error saving your asset image, \(error.localizedDescription)")
+            } else {
+                let imgUrl = metadata!.downloadURL()!.absoluteString as NSString
+                print("IMGAGAEGEGAE")
+                print(imgUrl)
+                completeUpload(imgUrl)
+            }
+        })
+    }
+    
+    func getImgFromFBS(imageUrl: String, completion: @escaping (_ image: UIImage) -> Void) {
+        
+        let ref = REF_IMGSTORAGE.child(imageUrl)
+        print(ref)
+        ref.data(withMaxSize: 1000000) { (data, error) in
             
-            let fetchedImage: UIImage!
-            
-            if error == nil {
+            if data != nil {
                 
-                fetchedImage = UIImage(data: data!)!
+                let image = UIImage(data: data!)!
+                completion(image)
                 
             } else {
-                
-                fetchedImage = UIImage(named: "compact-camera-xxl.png")
-                
+                print("ERRRRRRORORORORORORO GETTING IMAGE \(error?.localizedDescription)")
             }
-            completion(image: fetchedImage)
-        })
+        }
     }
-    
-    func postImgToImageschack(img: UIImage, completion: (imageschackUrl: String) -> ()) {
 
-    let urlStr = "https://post.imageshack.us/upload_api.php"
-    let url = NSURL(string: urlStr)!
-    let imgData = UIImageJPEGRepresentation(img, 0.2)!
-    let keyData = "12DJKPSU5fc3afbd01b1630cc718cae3043220f3".dataUsingEncoding(NSUTF8StringEncoding)!
-    let keyJSON = "json".dataUsingEncoding(NSUTF8StringEncoding)!
-
-        Alamofire.upload(.POST, url, multipartFormData: { splitData in
-                
-                splitData.appendBodyPart(data: imgData, name: "fileupload", fileName: "image", mimeType: "image/jpg")
-                splitData.appendBodyPart(data: keyData, name: "key")
-                splitData.appendBodyPart(data: keyJSON, name: "format")
-                
-            }, encodingCompletion: { encodingResult in
-                
-                switch encodingResult {
-                    
-                case .Success(let successRequest, _, _):
-                    successRequest.responseJSON(completionHandler: { endResponse in
-                        
-                        if let info = endResponse.result.value as? Dictionary<String, AnyObject> {
-                            
-                            if let links = info["links"] as? Dictionary<String, AnyObject> {
-                                
-                                if let url = links["image_link"] as? String {
-                                    
-                                    LoggedInVC.imageCache.setObject(img, forKey: url)
-                                    completion(imageschackUrl: url)
-                                }
-                            }
-                        }
-                    })
-                case .Failure(let errorType):
-                    print("\(errorType)")
-                }
-        })
-    }
+//
+//    
+//    
+//    
+//    
+//    
+//    func fetchImageFromUrl(_ url: String, completion: @escaping (_ image: UIImage) -> ()) {
+//        
+//        Alamofire.request(url).validate(contentType: ["image/*"]).response(completionHandler: { (defaultDataResponse) in
+//            let fetchedImage: UIImage!
+//            if defaultDataResponse.error == nil {
+//                fetchedImage = UIImage(data: defaultDataResponse.data!)!
+//            } else {
+//                fetchedImage = UIImage(named: "compact-camera-xxl.png")
+//            }
+//            completion(fetchedImage)
+//        })
+//    }
+//    
+//    func postImgToImageschack(_ img: UIImage, completion: @escaping (_ imageschackUrl: String) -> ()) {
+//
+//    let urlStr = "https:post.imageshack.us/upload_api.php"
+//    let url = URL(string: urlStr)!
+//    let imgData = UIImageJPEGRepresentation(img, 0.2)!
+//    let keyData = "12DJKPSU5fc3afbd01b1630cc718cae3043220f3".data(using: String.Encoding.utf8)!
+//    let keyJSON = "json".data(using: String.Encoding.utf8)!
+//
+//    Alamofire.upload(multipartFormData: { (splitData) in
+//            
+//            splitData.append(imgData, withName: "fileUpload", fileName: "image", mimeType: "image/jpg")
+//            splitData.append(keyData, withName: "key")
+//            splitData.append(keyJSON, withName: "format")
+//            
+//    }, to: url) { (encodingResult) in
+//            
+//            switch encodingResult {
+//                
+//            case .success(let successRequest, _, _):
+//                successRequest.responseJSON(completionHandler: { endResponse in
+//                    
+//                    if let info = endResponse.result.value as? Dictionary<String, AnyObject> {
+//                        
+//                        if let links = info["links"] as? Dictionary<String, AnyObject> {
+//                            
+//                            if let url = links["image_link"] as? String {
+//                                
+//                                LoggedInVC.imageCache.setObject(img, forKey: url as AnyObject)
+//                                completion(url)
+//                            }
+//                        }
+//                    }
+//                })
+//            case .failure(let errorType):
+//                print("\(errorType)")
+//            }
+//        }
+//    }
     
-    func convertTimeStamp(timestamp: Int) -> String {
+    func convertTimeStamp(_ timestamp: Int) -> String {
         
         let timeInMilliseconds = Double(timestamp)
         let timeInSeconds = timeInMilliseconds / 1000.0
         
-        let shortDateFormatter = NSDateFormatter()
-        shortDateFormatter.dateStyle = NSDateFormatterStyle.ShortStyle
+        let shortDateFormatter = DateFormatter()
+        shortDateFormatter.dateStyle = DateFormatter.Style.short
         
-        let date = NSDate(timeIntervalSince1970: timeInSeconds)
+        let date = Date(timeIntervalSince1970: timeInSeconds)
         
         print("Printing current Date")
         print(date)
         
-        let currentDateNS = NSDate()
+        let currentDateNS = Date()
     
-        let todayDateFormatter = NSDateFormatter()
+        let todayDateFormatter = DateFormatter()
         todayDateFormatter.dateFormat = "HH:mm"
         
-        let dateStringFormatter = NSDateFormatter()
+        let dateStringFormatter = DateFormatter()
         dateStringFormatter.dateFormat = "EEE, dd MMMM yyyy @ HH:mm"
         
         
-        let newdate = shortDateFormatter.stringFromDate(date)
+        _ = shortDateFormatter.string(from: date)
         
         let currentDateInUnix = currentDateNS.timeIntervalSinceReferenceDate
         let latestdayInUnix = date.timeIntervalSinceReferenceDate
@@ -139,21 +183,19 @@ class DataService {
         
         let diffinhours = diff/3600
         
-     
-        
         var dateToPrint = "N/A"
         
         if diffinhours < 24.0 {
         
-            dateToPrint = "today @ \(todayDateFormatter.stringFromDate(date))"
+            dateToPrint = "today @ \(todayDateFormatter.string(from: date))"
         
         } else if diffinhours > 24.0 && diffinhours < 48.0 {
             
-            dateToPrint = "yesterday @ \(todayDateFormatter.stringFromDate(date))"
+            dateToPrint = "yesterday @ \(todayDateFormatter.string(from: date))"
         
         } else {
             
-            dateToPrint = "\(dateStringFormatter.stringFromDate(date))"
+            dateToPrint = "\(dateStringFormatter.string(from: date))"
         }
         
         return dateToPrint

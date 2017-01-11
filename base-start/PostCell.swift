@@ -8,10 +8,14 @@
 
 import UIKit
 import Alamofire
-import Firebase
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
+import FirebaseAuth
+import FBSDKCoreKit
 
 class PostCell: UITableViewCell {
-
+    
     @IBOutlet weak var profileImage: UIImageView!
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var likesLbl: UILabel!
@@ -22,20 +26,20 @@ class PostCell: UITableViewCell {
     
     var post: Post!
     var request: Request?
-    var likeRef: Firebase!
+    var likeRef: FIRDatabaseReference!
     var fetchedImg: UIImage!
     var numberOfComments: UInt!
-
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        let tap = UITapGestureRecognizer(target: self, action: "likeTapped:")
+        let tap = UITapGestureRecognizer(target: self, action: #selector(PostCell.likeTapped(_:)))
         tap.numberOfTapsRequired = 1
         likeImg.addGestureRecognizer(tap)
-        likeImg.userInteractionEnabled = true
+        likeImg.isUserInteractionEnabled = true
     }
     
-    override func drawRect(rect: CGRect) {
+    override func draw(_ rect: CGRect) {
         profileImage.layer.cornerRadius = profileImage.frame.width / 2
         profileImage.clipsToBounds = true
         postImageView.clipsToBounds = true
@@ -43,7 +47,7 @@ class PostCell: UITableViewCell {
     
     // POST CONFIG
     
-    func configureCell(post: Post, img: UIImage?, userImg: UIImage?) {
+    func configureCell(_ post: Post) {
         
         self.post = post
         self.descLbl.text = post.postDescription
@@ -53,59 +57,58 @@ class PostCell: UITableViewCell {
         
         if post.imageUrl != nil {
             
-            self.postImageView.hidden = false
+            self.postImageView.isHidden = false
             
-            if img != nil {
-                
+            if let img = IMG_CACHE.object(forKey: post.imageUrl! as NSString) {
                 self.postImageView.image = img
-            
             } else {
-            
-                DataService.ds.fetchImageFromUrl(post.imageUrl!, completion: { (image) -> () in
-                    
+                
+                DataService.ds.getImgFromFBS(imageUrl: "\(post.postKey)/postImg.png") {(image) in
                     self.postImageView.image = image
-                    
-                })
+                    IMG_CACHE.setObject(image, forKey: self.post.imageUrl! as NSString)
+                }
             }
             
         } else {
-            self.postImageView.hidden = true
+            self.postImageView.isHidden = true
         }
         
         //PROFILEIMG & USERNAME
         
-        let userIdRef = DataService.ds.REF_USERS.childByAppendingPath("\(post.posterId)")
+        let userIdRef = DataService.ds.REF_USERS.child("\(post.posterId)")
         
-        userIdRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
+        userIdRef.observeSingleEvent(of: .value, with: { snapshot in
             
             if let dict = snapshot.value as? Dictionary<String, AnyObject> {
                 
                 if let username = dict["username"] as? String {
                     self.usernameLbl.text = username
                 }
-                                
+                
                 if let profileImageUrl = dict["profileImgUrl"] as? String {
                     
-                    if let profileImg = LoggedInVC.imageCache.objectForKey(profileImageUrl) as? UIImage {
+                    if let profileImg = IMG_CACHE.object(forKey: profileImageUrl as NSString) {
                         
                         self.profileImage.image = profileImg
                         
                     } else {
                         
-                        DataService.ds.fetchImageFromUrl(profileImageUrl, completion: { image in
-                            
+                        DataService.ds.getImgFromFBS(imageUrl: "\(post.posterId)/profileImg.png", completion: { image in
                             self.profileImage.image = image
+                            IMG_CACHE.setObject(image, forKey: profileImageUrl as NSString)
+                            
+                            
                         })
                     }
                 }
             }
         })
-
+        
         //LIKESIMG CONTROL
         
-        likeRef = DataService.ds.REF_USER_CURRENT.childByAppendingPath("likes").childByAppendingPath(post.postKey)
-
-        likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
+        likeRef = DataService.ds.REF_USER_CURRENT.child("likes").child("\(post.postKey)")
+        
+        likeRef.observeSingleEvent(of: .value, with: { snapshot in
             
             if let _ = snapshot.value as? NSNull {
                 //This means we have note liked this specific post
@@ -114,24 +117,24 @@ class PostCell: UITableViewCell {
                 self.likeImg.image = UIImage(named: "heart-full.png")
             }
         })
-    
+        
         //NUMBER OF COMMENTS
         
-        let postCommentsRef = DataService.ds.REF_POSTS.childByAppendingPath(post.postKey).childByAppendingPath("comments")
+        let postCommentsRef = DataService.ds.REF_POSTS.child("\(post.postKey)").child("comments")
         
-        postCommentsRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
-                
-                self.numberOfComments = snapshot.childrenCount
+        postCommentsRef.observeSingleEvent(of: .value, with: { snapshot in
             
-                self.commentsBtn.setTitle("Comments (\(self.numberOfComments))", forState: UIControlState.Normal)
+            self.numberOfComments = snapshot.childrenCount
+            
+            self.commentsBtn.setTitle("Comments (\(self.numberOfComments!))", for: UIControlState())
         })
         
     }
     
-    func likeTapped(sender: UITapGestureRecognizer) {
-          print(likeRef)
+    func likeTapped(_ sender: UITapGestureRecognizer) {
+        print(likeRef)
         
-        likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
+        likeRef.observeSingleEvent(of: .value, with: { snapshot in
             
             if let _ = snapshot.value as? NSNull {
                 

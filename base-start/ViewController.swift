@@ -7,59 +7,59 @@
 //
 
 import UIKit
-import Firebase
-import FBSDKCoreKit
-import FBSDKLoginKit
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
+import FirebaseAuth
 
 class ViewController: UIViewController {
 
     @IBOutlet weak var passwordField: MaterialTextField!
     @IBOutlet weak var emailField: MaterialTextField!
-
-    @IBOutlet weak var loginButton: FBSDKLoginButton!
+    @IBOutlet weak var fbLoginButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        loginButton.titleLabel!.adjustsFontSizeToFitWidth = true
+        fbLoginButton.titleLabel!.adjustsFontSizeToFitWidth = true
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         
-        if NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID) != nil {
+        if UserDefaults.standard.value(forKey: KEY_UID) != nil {
             
-            let userKey = NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID)
-            self.performSegueWithIdentifier(SEGUE_LOGGED_IN, sender: userKey)
+            let userKey = UserDefaults.standard.value(forKey: KEY_UID)
+            self.performSegue(withIdentifier: SEGUE_LOGGED_IN, sender: userKey)
         }
     }
     
-    @IBAction func attemptLoginBtn(sender: UIButton) {
+    @IBAction func attemptLoginBtn(_ sender: UIButton) {
         
-        if let email = emailField.text where email != "", let pwd = passwordField.text where pwd != "" {
+        if let email = emailField.text, email != "", let pwd = passwordField.text, pwd != "" {
             
             clearForm()
             
-            DataService.ds.REF_BASE.authUser(email, password: pwd, withCompletionBlock: { error , authData in
+            FIRAuth.auth()?.signIn(withEmail: email, password: pwd, completion: { authData, error in
                 
-                if error != nil {
+                if let error = error as? NSError {
                     
-                    if let errorDesc = FAuthenticationError(rawValue: error.code) {
+                    if let errorDesc = FIRAuthErrorCode(rawValue: error.code) {
                         
                         switch errorDesc {
                             
-                        case .UserDoesNotExist:
-                            
+                        case .errorCodeUserNotFound:
+
                             let user = ["email" : email, "pwd": pwd]
                             
-                            self.performSegueWithIdentifier(SEGUE_SETUP_USER, sender: user)
+                            self.performSegue(withIdentifier: SEGUE_SETUP_USER, sender: user)
                         
-                        case .EmailTaken:
+                        case .errorCodeEmailAlreadyInUse:
                             self.displayAlert("User already exists!", msg: "Please choose another user!")
                             
-                        case .InvalidEmail:
+                        case .errorCodeInvalidEmail:
                             self.displayAlert("Invalid Email", msg: "Please insert a vaild e-mail adress!")
                             
-                        case .InvalidPassword:
+                        case .errorCodeWrongPassword, .errorCodeWeakPassword :
                             self.displayAlert("Invalid Password", msg: "Please try again!")
                         default:
                             self.displayAlert("Server alert", msg: "The server found a problem, please try again later!")
@@ -68,8 +68,8 @@ class ViewController: UIViewController {
                     
                 } else {
                     
-                    NSUserDefaults.standardUserDefaults().setValue(authData.uid, forKey: KEY_UID)
-                    self.performSegueWithIdentifier(SEGUE_LOGGED_IN, sender: nil)
+                    UserDefaults.standard.setValue(authData?.uid, forKey: KEY_UID)
+                    self.performSegue(withIdentifier: SEGUE_LOGGED_IN, sender: nil)
                     
                 }
             })
@@ -78,92 +78,31 @@ class ViewController: UIViewController {
         }
     }
     
-    @IBAction func fbBtnPressed(sender: UIButton) {
+    @IBAction func fbLoginBtnPressed(_ sender: UIButton) {
         
-        clearForm()
-        
-        let facebookLogin = FBSDKLoginManager()
-        var user = Dictionary<String, String>()
-        
-        facebookLogin.logInWithReadPermissions(["email", "public_profile"], fromViewController: self) { result, error in
-        
-            if error != nil {
-                print("Facebook login failed. Error \(error)")
-            
-            } else {
-                
-                let fbRequest = FBSDKGraphRequest(graphPath:"me", parameters: ["fields": "email, name"])
-                
-                fbRequest.startWithCompletionHandler { (connection : FBSDKGraphRequestConnection!, result : AnyObject!, error : NSError!) -> Void in
-                    
-                    if error != nil {
-                        
-                        print("Error Getting Info \(error)")
-                        
-                    } else {
-                    
-                        let dict = result as! Dictionary<String, String>
-                        user["username"] = dict["name"]
-                        
-                    }
-                }
-
-                let accessToken = FBSDKAccessToken.currentAccessToken().tokenString
-    
-                DataService.ds.REF_BASE.authWithOAuthProvider("facebook", token: accessToken, withCompletionBlock: { error, authData in
-                    
-                    if error != nil {
-                        
-                        print("Login Failed. \(error)")
-                    
-                    } else {
-                        
-                        if NSUserDefaults.standardUserDefaults().valueForKey(KEY_UID) != nil {
-                            
-                        } else {
-                        
-                        let userId = authData.uid!.stringByReplacingOccurrencesOfString("facebook:", withString: "")
-                            
-                        user["profileImgUrl"] = "https://graph.facebook.com/\(userId)/picture?type=large"
-                        user["provider"] = authData.provider!
-                        user["id"] = authData.uid!
-                        
-                        DataService.ds.createFirebaseUser(authData.uid, user: user)
-                
-                        }
-                        NSUserDefaults.standardUserDefaults().setValue(authData.uid, forKey: KEY_UID)
-                        self.performSegueWithIdentifier(SEGUE_LOGGED_IN, sender: nil)
-                    }
-                })
-            }
-        }
+        displayAlert("Error!", msg: "FB Login not available yet, coming soon!")
     }
     
-    func displayAlert(title: String, msg: String) {
+    func displayAlert(_ title: String, msg: String) {
         
-        let alert = UIAlertController(title: title, message: msg, preferredStyle: UIAlertControllerStyle.Alert)
-        let action = UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil)
+        let alert = UIAlertController(title: title, message: msg, preferredStyle: UIAlertControllerStyle.alert)
+        let action = UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil)
         alert.addAction(action)
-        presentViewController(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
         if segue.identifier == SEGUE_SETUP_USER {
-            
-            if let vc = segue.destinationViewController as? SetupUserVC {
-                vc.user = sender!
-                
+            if let vc = segue.destination as? SetupUserVC {
+                vc.user = sender! as AnyObject
             } else {
-                
                 print("unable to perform segue")
             }
-            
         }
     }
     
     func clearForm() {
-        
         self.emailField.text = ""
         self.passwordField.text = ""
     }

@@ -7,7 +7,9 @@
 //
 
 import UIKit
-import Firebase
+import FirebaseDatabase
+import FirebaseAuth
+import FirebaseStorage
 import Alamofire
 
 class CommentsVC: UIViewController {
@@ -26,14 +28,13 @@ class CommentsVC: UIViewController {
         
         self.tableView.setNeedsLayout()
         self.tableView.layoutIfNeeded()
-
+        
         
         //LOADING EVENTUAL EXISTING COMMENTS
-
-        let postRef = DataService.ds.REF_POSTS.childByAppendingPath(postKey).childByAppendingPath("comments")
+        let postRef = DataService.ds.REF_POSTS.child(postKey).child("comments")
         let commentRef = DataService.ds.REF_COMMENTS
         
-        postRef.observeEventType(.Value, withBlock: { snapshot in
+        postRef.observe(.value, with: { snapshot in
             
             self.commentsArray = []
             
@@ -42,28 +43,28 @@ class CommentsVC: UIViewController {
                 
             } else {
                 
-                if let snapshots = snapshot.children.allObjects as? [FDataSnapshot] {
+                if let snapshots = snapshot.children.allObjects as? [FIRDataSnapshot] {
                     
                     for snap in snapshots {
                         
                         let commentId = snap.key
                         
-                        let ref = commentRef.childByAppendingPath(commentId)
+                        let ref = commentRef.child("\(commentId)")
                         
-                        ref.observeSingleEventOfType(.Value, withBlock: { snapshot in
+                        ref.observeSingleEvent(of: .value, with: { snapshot in
                             
                             if var comment = snapshot.value as? Dictionary<String, AnyObject> {
                                 
                                 if let uid = comment["commenterId"] as? String {
                                     
-                                    DataService.ds.REF_USERS.childByAppendingPath(uid).observeSingleEventOfType(.Value, withBlock: { snapshot in
+                                    DataService.ds.REF_USERS.child("\(uid)").observeSingleEvent(of: .value, with: { snapshot in
                                         
                                         if let userDict = snapshot.value as? Dictionary<String, AnyObject> {
                                             
-                                            if let username = userDict["username"] as? String, imgUrl = userDict["profileImgUrl"] as? String {
+                                            if let username = userDict["username"] as? String, let imgUrl = userDict["profileImgUrl"] as? String {
                                                 
-                                                comment["username"] = username
-                                                comment["profileImgUrl"] = imgUrl
+                                                comment["username"] = username as AnyObject?
+                                                comment["profileImgUrl"] = imgUrl as AnyObject?
                                                 
                                                 let commentToAppend = Comment(commentKey: commentId, dict: comment)
                                                 
@@ -88,9 +89,9 @@ class CommentsVC: UIViewController {
     
     @IBAction func makeComment() {
         
-        if let commentText = postCommentTxtField.text where commentText != "" {
+        if let commentText = postCommentTxtField.text, commentText != "" {
             
-            DataService.ds.REF_USER_CURRENT.observeSingleEventOfType(.Value, withBlock: { snapshot in
+            DataService.ds.REF_USER_CURRENT.observeSingleEvent(of: .value, with: { snapshot in
                 
                 let uid = snapshot.key
                 
@@ -99,9 +100,9 @@ class CommentsVC: UIViewController {
         }
     }
     
-    func commentToFirebase(commentText: String, commenterId: String) {
+    func commentToFirebase(_ commentText: String, commenterId: String) {
         
-        let comment: Dictionary<String, AnyObject> = ["commentText": commentText, "commenterId": commenterId, "timestamp": "N/A"]
+        let comment: Dictionary<String, AnyObject> = ["commentText": commentText as AnyObject, "commenterId": commenterId as AnyObject, "timestamp": "N/A" as AnyObject]
         
         DataService.ds.REF_COMMENTS.childByAutoId().setValue(comment) { error, snapshot in
             
@@ -112,44 +113,40 @@ class CommentsVC: UIViewController {
                 
                 let commentKey = snapshot.key
                 
-                DataService.ds.REF_COMMENTS.childByAppendingPath(commentKey).updateChildValues(["timestamp": FirebaseServerValue.timestamp()])
-                DataService.ds.REF_USERS.childByAppendingPath(commenterId).childByAppendingPath("comments").childByAppendingPath(commentKey).setValue(true)
-                DataService.ds.REF_POSTS.childByAppendingPath(self.postKey).childByAppendingPath("comments").childByAppendingPath(commentKey).setValue(true)
+                DataService.ds.REF_COMMENTS.child("\(commentKey)").updateChildValues(["timestamp": FIRServerValue.timestamp()])
+                DataService.ds.REF_USERS.child("\(commenterId)").child("comments").child("\(commentKey)").setValue(true)
+                DataService.ds.REF_POSTS.child("\(self.postKey!)").child("comments").child("\(commentKey)").setValue(true)
+                self.tableView.reloadData()
             }
         }
         
         postCommentTxtField.text = ""
         postCommentTxtField.resignFirstResponder()
-        tableView.reloadData()
     }
 }
-//TABLEVIEW
+
+//TABLEVIEW EXTENSION
 extension CommentsVC: UITableViewDataSource, UITableViewDelegate {
     
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return commentsArray.count
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        if let cell = tableView.dequeueReusableCellWithIdentifier("CommentsCell") as? CommentsViewCell {
-            print(commentsArray)
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "CommentsCell") as? CommentsViewCell {
             
             let currentComment = commentsArray[indexPath.row]
-            
-            print(currentComment)
-            
             let text = currentComment.commentText
             let commenterId = currentComment.uId
             let url = currentComment.commenterProfileImgUrl
             let username = currentComment.commenterUsername
             let time = Double(currentComment.timestamp / 1000)
-            let newTime = NSDate(timeIntervalSince1970: time)
-            print("this is in comment vc \(newTime)")
+            let newTime = Date(timeIntervalSince1970: time)
             let timestamp = DataService.ds.convertTimeStamp(currentComment.timestamp)
             
             cell.configureCommentsViewCell(text, commenterId: commenterId, commenterProfileImgUrl: url, username: username, timestamp: timestamp)
@@ -158,13 +155,5 @@ extension CommentsVC: UITableViewDataSource, UITableViewDelegate {
         }
         return UITableViewCell()
     }
-    
-//    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-//        return UITableViewAutomaticDimension
-//    }
-//    
-//    func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-//        return UITableViewAutomaticDimension
-//    }
 }
 

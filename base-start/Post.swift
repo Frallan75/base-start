@@ -7,22 +7,27 @@
 //
 
 import Foundation
-import Firebase
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
+import FirebaseAuth
+import FBSDKCoreKit
 
 class Post {
     
-    private var _postDescription: String!
-    private var _imageUrl: String?
-    private var _likes: Int!
-    private var _postKey: String!
-    private var _postRef: Firebase!
-    private var _posterId: String!
+    fileprivate var _postDescription: String!
+    fileprivate var _imageUrl: NSString?
+    fileprivate var _likes: Int!
+    fileprivate var _postKey: String!
+    fileprivate var _postRef: FIRDatabaseReference!
+    fileprivate var _posterId: String!
+    fileprivate var _commentCount: Int!
 
     var postDescription: String {
         return _postDescription
     }
     
-    var imageUrl: String? {
+    var imageUrl: NSString? {
         return _imageUrl
     }
     
@@ -38,6 +43,10 @@ class Post {
         return _posterId
     }
     
+    var commentCount: Int {
+        return _commentCount
+    }
+    
     init(postKey: String, dict: Dictionary<String, AnyObject>) {
         
         self._postKey = postKey
@@ -46,7 +55,7 @@ class Post {
             self._likes = likes
         }
         
-        if let imageUrl = dict["imageUrl"] as? String {
+        if let imageUrl = dict["postImgUrl"] as? NSString {
             self._imageUrl = imageUrl
         }
         
@@ -54,14 +63,15 @@ class Post {
             self._postDescription = desc
         }
         
-        if let posterId = dict["id"] as? String {
+        if let posterId = dict["posterId"] as? String {
             self._posterId = posterId
         }
         
-        self._postRef = DataService.ds.REF_POSTS.childByAppendingPath(self._postKey)
+        self._postRef = DataService.ds.REF_POSTS.child("\(postKey)")
+//        self._postRef = DataService.ds.REF_POSTS.child("\(self._postKey)")
     }
     
-    func adjustLikes(addlike: Bool) {
+    func adjustLikes(_ addlike: Bool) {
         
         if addlike {
             _likes = _likes + 1
@@ -70,7 +80,7 @@ class Post {
             _likes = _likes - 1
         }
     
-        _postRef.childByAppendingPath("likes").setValue(_likes)
+        _postRef.child("likes").setValue(_likes)
     }
     
 }

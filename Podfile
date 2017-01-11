@@ -1,8 +1,11 @@
-platform :ios, '9.0'
+platform :ios, '10.0'
 use_frameworks!
 
 target 'base-start' do
-pod 'Firebase', '>= 2.5.0'
-pod 'Alamofire', '~> 3.0'
+pod 'Firebase/Core'
+pod 'Firebase/Database'
+pod 'Firebase/Auth'
+pod 'Firebase/Storage'
+pod 'Alamofire', '~> 4.0'
 end
 

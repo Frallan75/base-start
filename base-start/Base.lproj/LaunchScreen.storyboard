@@ -1,8 +1,13 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" initialViewController="01J-lp-oVM">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11761" systemVersion="16D17a" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -14,30 +19,38 @@
                         <viewControllerLayoutGuide type="bottom" id="xb3-aO-Qok"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="logo_TT_rgb" translatesAutoresizingMaskIntoConstraints="NO" id="lXv-R5-KHr">
-                                <rect key="frame" x="136" y="212" width="329" height="175"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="175" id="BRP-st-Mbd"/>
-                                    <constraint firstAttribute="width" constant="329" id="hZq-jy-NGa"/>
-                                </constraints>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Logo" translatesAutoresizingMaskIntoConstraints="NO" id="533-Ja-9o3">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                             </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="focus" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NYT-M6-yyR">
+                                <rect key="frame" x="88" y="285" width="198" height="97"/>
+                                <fontDescription key="fontDescription" name="PingFangHK-Light" family="PingFang HK" pointSize="61"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="lXv-R5-KHr" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="X9z-nb-1ZF"/>
-                            <constraint firstItem="lXv-R5-KHr" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="z9F-3k-luU"/>
+                            <constraint firstItem="NYT-M6-yyR" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leadingMargin" constant="72" id="AfW-EG-lfS"/>
+                            <constraint firstItem="533-Ja-9o3" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="CFa-R9-WfA"/>
+                            <constraint firstItem="533-Ja-9o3" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="KwG-yG-GGm"/>
+                            <constraint firstItem="533-Ja-9o3" firstAttribute="bottom" secondItem="xb3-aO-Qok" secondAttribute="top" id="Oc6-il-czN"/>
+                            <constraint firstAttribute="trailing" secondItem="533-Ja-9o3" secondAttribute="trailing" id="OfR-Tg-OgA"/>
+                            <constraint firstItem="NYT-M6-yyR" firstAttribute="centerX" secondItem="533-Ja-9o3" secondAttribute="centerX" id="ZBA-Eb-IHo"/>
+                            <constraint firstItem="NYT-M6-yyR" firstAttribute="centerY" secondItem="533-Ja-9o3" secondAttribute="centerY" id="cLE-st-8ii"/>
+                            <constraint firstItem="NYT-M6-yyR" firstAttribute="top" secondItem="Llm-lL-Icb" secondAttribute="bottom" constant="265" id="hqg-4g-VtB"/>
                         </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="53" y="375"/>
+            <point key="canvasLocation" x="52" y="374.66266866566718"/>
         </scene>
     </scenes>
     <resources>
-        <image name="logo_TT_rgb" width="1670" height="1295"/>
+        <image name="Logo" width="400" height="400"/>
     </resources>
 </document>

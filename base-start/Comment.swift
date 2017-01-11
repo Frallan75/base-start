@@ -9,17 +9,21 @@
 import Foundation
 import UIKit
 import Alamofire
-import Firebase
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
+import FirebaseAuth
+import FBSDKCoreKit
 
 class Comment {
     
-    private var _commentText: String!
-    private var _uId: String!
-    private var _commentKey: String!
-    private var _commenterUsername: String!
-    private var _commenterProfileImgUrl: String!
-    private var _commenterProfileImg: UIImage!
-    private var _timestamp: Int!
+    fileprivate var _commentText: String!
+    fileprivate var _uId: String!
+    fileprivate var _commentKey: String!
+    fileprivate var _commenterUsername: String!
+    fileprivate var _commenterProfileImgUrl: String!
+    fileprivate var _commenterProfileImg: UIImage!
+    fileprivate var _timestamp: Int!
     
     var commentText: String {
         return _commentText

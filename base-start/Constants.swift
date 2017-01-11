@@ -26,4 +26,7 @@ let SEGUE_TO_LOGGED_IN = "setupToLoggedIn"
 
 let STATUS_ACCOUNT_NONEXIST = -8
 
+//IMG HANDLING
+let MAX_IMG_SIZE: CGFloat = 100000
+let IMG_CACHE: NSCache<NSString, UIImage> = NSCache()
 

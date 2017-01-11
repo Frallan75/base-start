@@ -13,10 +13,10 @@ class MaterialView: UIView {
     override func awakeFromNib() {
         
         layer.cornerRadius = 2.0
-        layer.shadowColor = SHADOW_COLOR.CGColor
+        layer.shadowColor = SHADOW_COLOR.cgColor
         layer.shadowOpacity = 0.9
         layer.shadowRadius = 4.0
-        layer.shadowOffset = CGSizeMake(0.0, 2.0)
+        layer.shadowOffset = CGSize(width: 0.0, height: 2.0)
 
     }
 }

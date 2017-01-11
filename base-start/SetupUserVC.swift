@@ -7,7 +7,11 @@
 //
 
 import UIKit
-import Firebase
+import FirebaseCore
+import FirebaseDatabase
+import FirebaseStorage
+import FirebaseAuth
+import FBSDKCoreKit
 import Alamofire
 
 class SetupUserVC: UIViewController {
@@ -18,9 +22,9 @@ class SetupUserVC: UIViewController {
     
     var imagePicker = UIImagePickerController()
     
-    private var _user: AnyObject!
-    private var _userEmail: String!
-    private var _userPwd: String!
+    fileprivate var _user: AnyObject!
+    fileprivate var _userEmail: String!
+    fileprivate var _userPwd: String!
     
     var userEmail: String {
         return _userEmail
@@ -43,6 +47,11 @@ class SetupUserVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let imageView = userImageView
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(pickUserImg))
+        imageView?.isUserInteractionEnabled = true
+        imageView?.addGestureRecognizer(tapGestureRecognizer)
+        
         imagePicker.delegate = self
         
         if let userEmail = user["email"] as? String {
@@ -60,68 +69,88 @@ class SetupUserVC: UIViewController {
         }
     }
     
-    @IBAction func saveBtnPressed(sender: UIButton) {
+    @IBAction func saveBtnPressed(_ sender: UIButton) {
         
-        if let username = userNameTextField.text where username != "" {
+        if let username = userNameTextField.text, username != "" {
             
             var userToSave: Dictionary<String, AnyObject>!
             
-            DataService.ds.REF_BASE.createUser(self.userEmail, password: self.userPwd, withValueCompletionBlock: { error, userData in
+            FIRAuth.auth()?.createUser(withEmail: self.userEmail, password: self.userPwd, completion: { authUser, error in
                 
                 if error != nil {
                     
-                    print(error.debugDescription)
+                    self.displayAlert("Error", body: "The folloeing error occurred \(error.debugDescription)")
                     
                 } else {
-                    
-                    DataService.ds.postImgToImageschack(self.userImageView.image!, completion:{ imageschackUrl in
+        
+                    DataService.ds.uploadImage(uid: authUser!.uid, imageName: "profileImg.png" , image: self.userImageView.image!, completeUpload: { (imgUrl) in
                         
-                        LoggedInVC.imageCache.setObject(self.userImageView.image!, forKey: imageschackUrl)
+                        userToSave = ["provider": "emailaccount" as AnyObject, "username": username as AnyObject, "profileImgUrl": imgUrl as AnyObject]
                         
-                        userToSave = ["provider": "emailaccount", "username": username, "profileImgUrl": imageschackUrl]
+                        DataService.ds.REF_USERS.child("\(authUser!.uid)").setValue(userToSave)
                         
-                        DataService.ds.REF_USERS.childByAppendingPath("\(userData["uid"]!)").setValue(userToSave)
+                        UserDefaults.standard.setValue(authUser!.uid, forKey: "uid")
                         
-                        NSUserDefaults.standardUserDefaults().setValue(userData[KEY_UID], forKey: KEY_UID)
-                        
-                        self.performSegueWithIdentifier("setupToLoggedIn", sender: nil)
+                        self.performSegue(withIdentifier: "setupToLoggedIn", sender: nil)
                     })
                 }
             })
             
         } else {
-            self.displayAlert("Username Fail!", msg: "Please enter an unsername!")
+            self.displayAlert("Username Fail!", body: "Please enter an unsername!")
         }
     }
     
-    func displayAlert(title: String, msg: String) {
+    func selectImage() {
         
-        let alert = UIAlertController(title: title, message: msg, preferredStyle: UIAlertControllerStyle.Alert)
-        let action = UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil)
+        let imageAlert = UIAlertController(title: "Pick image", message: nil, preferredStyle: .actionSheet)
+        
+        let cameraOption = UIAlertAction(title: "Camera", style: .default, handler: { (action) in
+            if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerControllerSourceType.camera)){
+                self.imagePicker.sourceType = .camera
+                self.present(self.imagePicker, animated: true, completion: nil)
+            } else {
+                self.displayAlert("Warning!", body: "You don't have a camera!")
+            }
+        })
+        
+        let photoAlbumAction = UIAlertAction(title: "Album", style: .default, handler: { (action) in
+            self.imagePicker.sourceType = .photoLibrary
+            self.present(self.imagePicker, animated: true, completion: nil)
+        })
+        
+        let cancelImageAlertAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        imageAlert.addAction(cameraOption)
+        imageAlert.addAction(photoAlbumAction)
+        imageAlert.addAction(cancelImageAlertAction)
+        
+        present(imageAlert, animated: true, completion: nil)
+    }
+    
+    func displayAlert(_ title: String, body: String) {
+        
+        let alert = UIAlertController(title: title, message: body, preferredStyle: UIAlertControllerStyle.alert)
+        let action = UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil)
         alert.addAction(action)
-        presentViewController(alert, animated: true, completion: nil)
+        present(alert, animated: true, completion: nil)
     }
     
-    @IBAction func pickUserImg(sender: UITapGestureRecognizer) {
+    @IBAction func pickUserImg(_ sender: UITapGestureRecognizer) {
+        selectImage()
+    }
+    
+    @IBAction func selectImage(_ sender: UITapGestureRecognizer) {
         
-        presentViewController(imagePicker, animated: true, completion: nil)
+        present(imagePicker, animated: true, completion: nil)
     }
-    
-    @IBAction func selectImage(sender: UITapGestureRecognizer) {
-        
-        presentViewController(imagePicker, animated: true, completion: nil)
-    }
-    
 }
 
-extension SetupUserVC: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+extension SetupUserVC: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
-        
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        let image = info[UIImagePickerControllerOriginalImage] as! UIImage
         self.userImageView.image = image
-        
-        imagePicker.dismissViewControllerAnimated(true, completion: nil)
+        dismiss(animated: true, completion: nil)
     }
 }
-
-

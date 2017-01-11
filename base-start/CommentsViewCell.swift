@@ -20,26 +20,26 @@ class CommentsViewCell: UITableViewCell {
     
     }
     
-    override func drawRect(rect: CGRect) {
+    override func draw(_ rect: CGRect) {
         
         profileImg.layer.cornerRadius = profileImg.frame.height / 2
         profileImg.clipsToBounds = true
         
     }
 
-    func configureCommentsViewCell(comment: String, commenterId: String, commenterProfileImgUrl: String, username: String, timestamp: String) {
+    func configureCommentsViewCell(_ comment: String, commenterId: String, commenterProfileImgUrl: String, username: String, timestamp: String) {
         
         self.usernameLbl.text = username
         self.commentLbl.text = comment
         self.timestamp.text = timestamp
         
-        if let cachedProfileImg = LoggedInVC.imageCache.objectForKey(commenterProfileImgUrl) as? UIImage {
+        if let cachedProfileImg = IMG_CACHE.object(forKey: commenterProfileImgUrl as NSString) {
             
             self.profileImg.image = cachedProfileImg
             
         } else {
         
-            DataService.ds.fetchImageFromUrl(commenterProfileImgUrl, completion: { (image) -> () in
+            DataService.ds.getImgFromFBS(imageUrl: commenterProfileImgUrl, completion: { (image) in
                 
                 self.profileImg.image = image
             })

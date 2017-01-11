@@ -13,10 +13,10 @@ class MaterialButton: UIButton {
     override func awakeFromNib() {
         
         layer.cornerRadius = 2.0
-        layer.shadowColor = SHADOW_COLOR.CGColor
+        layer.shadowColor = SHADOW_COLOR.cgColor
         layer.shadowOpacity = 0.8
         layer.shadowRadius = 5.0
-        layer.shadowOffset = CGSizeMake(0.0, 2.0)
+        layer.shadowOffset = CGSize(width: 0.0, height: 2.0)
         
     }
 
